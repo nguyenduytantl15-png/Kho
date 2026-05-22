@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7 Ngày Sinh Tồn: Thử Thách 200K</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .game-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 450px;
+            text-align: center;
+        }
+        h1 { color: #2c3e50; margin-bottom: 5px; }
+        h2 { color: #16a085; margin-top: 0; }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .stat-item { display: flex; flex-direction: column; }
+        .money { color: #e74c3c; }
+        .health { color: #2ecc71; }
+        .happy { color: #f1c40f; }
+        .story-box {
+            min-height: 120px;
+            background: #fdfefe;
+            border: 1px solid #dcdde1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #34495e;
+        }
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: left;
+            padding-left: 20px;
+        }
+        button:hover { background-color: #2980b9; }
+        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        .restart-btn { background-color: #e74c3c; text-align: center; padding-left: 12px;}
+        .restart-btn:hover { background-color: #c0392b; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>💸 Thử Thách 200K 💸</h1>
+    <h2 id="day-display">Ngày 1 (Thứ Hai)</h2>
+    
+    <div class="stats">
+        <div class="stat-item money">💰 Tiền: <span id="money">200,000</span>đ</div>
+        <div class="stat-item health">🍔 Sức khỏe: <span id="health">100</span>%</div>
+        <div class="stat-item happy">😊 Hạnh phúc: <span id="happy">100</span>%</div>
+    </div>
+
+    <div class="story-box" id="story-text">
+        Chào mừng bạn đến với thử thách! Bạn chỉ có 200.000đ để sống sót qua một tuần. Hãy đưa ra những quyết định sáng suốt.
+    </div>
+
+    <div class="btn-container" id="choices-container">
+        </div>
+</div>
+
+<script>
+// Khởi tạo dữ liệu game
+let gameState = {
+    day: 1,
+    money: 200000,
+    health: 100,
+    happy: 100
+};
+
+const daysOfWeek = ["", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
+
+// Kho dữ liệu các tình huống
+const events = {
+    1: {
+        story: "🚨 <b>SỰ KIỆN: BỊ HƯ XE!</b><br>Sáng ra dắt xe đi làm thì lốp xe xẹp lép. Đời không như là mơ, bạn tính sao?",
+        choices: [
+            { text: "Dắt vào tiệm đầu ngõ vá xe (-40k)", action: () => { changeStats(-40000, 0, 0); nextDay(); } },
+            { text: "Đi xe buýt (-7k tiền vé, mệt người, đi trễ bị trừ 20k lương)", action: () => { changeStats(-27000, -20, 0); nextDay(); } },
+            { text: "Gọi đứa bạn thân qua chở hộ (Nợ nó một ân tình)", action: () => { changeStats(0, 0, -10); nextDay(); } }
+        ]
+    },
+    2: {
+        story: "🎂 <b>SỰ KIỆN: SINH NHẬT BẠN THÂN!</b><br>Đứa bạn chí cốt mời đi ăn lẩu sinh nhật. Không đi thì mất bạn, đi thì mất tiền...",
+        choices: [
+            { text: "Đi ăn vui vẻ, góp tiền quà bánh đàng hoàng (-100k)", action: () => { changeStats(-100000, 20, 30); nextDay(); } },
+            { text: "Giả vờ ốm ở nhà, bắn gói quà Shopee 20k chúc mừng (-20k)", action: () => { changeStats(-20000, 0, -5); nextDay(); } },
+            { text: "Đến ăn nhiệt tình nhưng giả vờ quên mang ví (Mặt dày)", action: () => { changeStats(0, 30, -40); nextDay(); } }
+        ]
+    },
+    3: {
+        story: "🔥 <b>SỰ KIỆN: FLASH SALE GIỮA ĐÊM!</b><br>Shopee giảm giá Combo 5 gói mì ly yêu thích từ 80k chỉ còn 35k! Có chốt đơn không?",
+        choices: [
+            { text: "Mua ngay tích trữ lương thực (-35k, ăn mì trừ sức khỏe nhẹ)", action: () => { changeStats(-35000, -10, 15); nextDay(); } },
+            { text: "Tắt app đi ngủ, nhịn thèm để giữ tiền (Tiết kiệm là quốc sách)", action: () => { changeStats(0, 0, -15); nextDay(); } },
+            { text: "Rủ đứa bạn mua chung chia đôi tiền (-18k, được 2 gói)", action: () => { changeStats(-18000, -5, 5); nextDay(); } }
+        ]
+    },
+    // Các ngày còn lại là sinh hoạt phí bình thường để người chơi cân đối
+    4: {
+        story: "🍲 <b>Ngày bình thường:</b> Hôm nay bạn muốn ăn gì để duy trì sức khỏe?",
+        choices: [
+            { text: "Ăn cơm tiệm bình dân đầy đủ chất (-35k)", action: () => { changeStats(-35000, 15, 5); nextDay(); } },
+            { text: "Húp mì tôm qua ngày cho rẻ (-10k)", action: () => { changeStats(-10000, -15, -10); nextDay(); } }
+        ]
+    },
+    5: {
+        story: "🌧️ <b>Trời mưa bão lớn:</b> Bạn không thể tự nấu ăn. Ship đồ ăn thì đắt đỏ.",
+        choices: [
+            { text: "Bấm bụng đặt app giao đồ ăn tận giường (-50k)", action: () => { changeStats(-50000, 10, 10); nextDay(); } },
+            { text: "Nhịn đói một bữa, uống nước lọc cầm hơi (0đ)", action: () => { changeStats(0, -30, -20); nextDay(); } }
+        ]
+    },
+    6: {
+        story: "💼 <b>Cơ hội kiếm tiền:</b> Có người quen nhờ bạn dịch hộ tài liệu/trực ca net trong 3 tiếng.",
+        choices: [
+            { text: "Nhận việc ngay, kiếm thêm thu nhập (+50k, tốn sức)", action: () => { changeStats(50000, -25, 0); nextDay(); } },
+            { text: "Từ chối, ở nhà nghỉ ngơi giữ sức (0đ)", action: () => { changeStats(0, 20, 10); nextDay(); } }
+        ]
+    },
+    7: {
+        story: "🎉 <b>NGÀY CUỐI CÙNG (Chủ Nhật):</b> Bạn chỉ cần bước qua ngày hôm nay là chiến thắng!",
+        choices: [
+            { text: "Nấu nốt gói mì cuối cùng, nằm im trong phòng chờ hết ngày (-5k)", action: () => { changeStats(-5000, 5, 0); nextDay(); } },
+            { text: "Ra công viên đi dạo giải ngố cho khuây khỏa (0đ)", action: () => { changeStats(0, 5, 15); nextDay(); } }
+        ]
+    }
+};
+
+// Cập nhật giao diện
+function updateUI() {
+    document.getElementById("money").innerText = gameState.money.toLocaleString('vi-VN');
+    document.getElementById("health").innerText = gameState.health;
+    document.getElementById("happy").innerText = gameState.happy;
+    
+    if (gameState.day <= 7) {
+        document.getElementById("day-display").innerText = `Ngày ${gameState.day} (${daysOfWeek[gameState.day]})`;
+    }
+}
+
+// Thay đổi chỉ số
+function changeStats(money, health, happy) {
+    gameState.money += money;
+    gameState.health = Math.min(100, Math.max(0, gameState.health + health));
+    gameState.happy = Math.min(100, Math.max(0, gameState.happy + happy));
+}
+
+// Chuyển ngày hoặc kiểm tra kết thúc game
+function nextDay() {
+    // Kiểm tra điều kiện thua cuộc giữa chừng
+    if (gameState.money < 0) {
+        endGame("💸 Bạn đã phá sản! Tài khoản về âm và bạn không còn tiền trả tiền gửi xe. GAME OVER!");
+        return;
+    }
+    if (gameState.health <= 0) {
+        endGame("🚑 Bạn đã kiệt sức vì ăn uống kham khổ và phải nhập viện. GAME OVER!");
+        return;
+    }
+    if (gameState.happy <= 0) {
+        endGame("🧠 Bạn bị trầm cảm nặng vì cuộc sống quá áp lực và gò bó. GAME OVER!");
+        return;
+    }
+
+    gameState.day += 1;
+
+    if (gameState.day > 7) {
+        // Thắng cuộc
+        endGame(`🏆 SUẤT SẮC! Bạn đã sống sót qua 1 tuần với số dư là ${gameState.money.toLocaleString('vi-VN')}đ! Bạn đúng là chiến thần quản lý tài chính.`);
+    } else {
+        loadEvent();
+    }
+}
+
+// Tải tình huống của ngày hiện tại
+function loadEvent() {
+    updateUI();
+    const currentEvent = events[gameState.day];
+    document.getElementById("story-text").innerHTML = currentEvent.story;
+    
+    const choicesContainer = document.getElementById("choices-container");
+    choicesContainer.innerHTML = ""; // Xóa các lựa chọn cũ
+    
+    currentEvent.choices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.innerText = choice.text;
+        btn.onclick = choice.action;
+        choicesContainer.appendChild(btn);
+    });
+}
+
+// Kết thúc trò chơi
+function endGame(message) {
+    updateUI();
+    document.getElementById("story-text").innerHTML = `<b>KẾT QUẢ:</b><br>${message}`;
+    const choicesContainer = document.getElementById("choices-container");
+    choicesContainer.innerHTML = `<button class="restart-btn" onclick="restartGame()">Chơi lại từ đầu</button>`;
+}
+
+// Chơi lại
+function restartGame() {
+    gameState = { day: 1, money: 200000, health: 100, happy: 100 };
+    loadEvent();
+}
+
+// Bắt đầu game lần đầu tiên
+loadEvent();
+</script>
+
+</body>
+</html>
